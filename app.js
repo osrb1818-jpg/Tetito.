@@ -1,11 +1,11 @@
 import express from "express";
 import cors from "cors";
+import { join } from "path";
 import { whatsappService } from "./services/whatsappService.js";
 import { getCachedConfig, updateConfig, invalidateConfigCache } from "./services/configService.js";
+import { startPairing } from "./services/pairingService.js";
 
 const app = express();
-import { startPairing } from "./services/pairingService.js";
-import { join } from "path";
 
 // Serve static files (HTML, CSS, JS) from public directory
 app.use(express.static("public"));
@@ -99,7 +99,6 @@ app.post("/api/pair", async (req, res) => {
         const { phoneNumber, method, socketId } = req.body;
 
         if (!socketId) {
-            // Warn but proceed (we have fallback now)
             console.warn("Pairing request missing socketId");
         }
 
