@@ -1,22 +1,29 @@
+import { createWhatsAppClient, getClient, clearSession } from "./whatsappClient.js";
+import { existsSync } from "fs";
+import { AUTH_INFO_PATH } from "./configService.js";
+
+export const whatsappService = {
+    client: null,
+
+    async init() {
+        try {
+            console.log("🔄 Initializing WhatsApp Bot...");
+
+            // Check if auth exists
+            const hasSession = existsSync(AUTH_INFO_PATH) &&
+                existsSync(`${AUTH_INFO_PATH}/creds.json`);
+
             // Create client
             this.client = await createWhatsAppClient();
 
-            // FORZAR PAIRING CODE CON ESPERA SEGURA
+            // Solicitar código de emparejamiento de forma segura si no hay sesión
             if (!hasSession) {
                 const phoneNumber = "50671531073";
                 console.log(`📱 Preparando enlace para el número: ${phoneNumber}`);
                 
-                // Esperar a que el socket abra la conexión de red correctamente antes de pedir el código
-                this.client.ev.on('connection.update', async (update) => {
-                    const { connection } = update;
-                    if (connection === 'open') {
-                        console.log("✅ ¡Conexión establecida con éxito!");
-                    }
-                });
-
                 setTimeout(async () => {
                     try {
-                        if (!this.client.authState.creds.registered) {
+                        if (this.client && typeof this.client.requestPairingCode === 'function') {
                             console.log(`✨ Solicitando código de emparejamiento para ${phoneNumber}...`);
                             const code = await this.client.requestPairingCode(phoneNumber);
                             console.log(`🔑 ==========================================`);
@@ -24,7 +31,43 @@
                             console.log(`🔑 ==========================================`);
                         }
                     } catch (err) {
-                        console.error("❌ Error al solicitar el código de emparejamiento:", err);
+                        console.error("❌ Error al solicitar el código:", err.message);
                     }
-                }, 6000); // 6 segundos de gracia para evitar el cierre 428
+                }, 5000);
             }
+
+            return this.client;
+        } catch (error) {
+            console.error("❌ Failed to initialize WhatsApp service:", error);
+            throw error;
+        }
+    },
+
+    getClient() {
+        return getClient();
+    },
+
+    async logout() {
+        const client = getClient();
+        if (client) {
+            try {
+                await client.logout();
+            } catch (e) {
+                console.error("Logout error:", e);
+            }
+        }
+        return clearSession();
+    },
+
+    async restart() {
+        console.log("🔄 Restarting WhatsApp connection...");
+        const client = getClient();
+        if (client) {
+            try {
+                client.end();
+            } catch (e) { }
+        }
+        return this.init();
+    }
+};
+
