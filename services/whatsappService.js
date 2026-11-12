@@ -1,4 +1,4 @@
-import { createWhatsAppClient, getClient, clearSession } from "./whatsappClient.js";
+Import { createWhatsAppClient, getClient, clearSession } from "./whatsappClient.js";
 import { existsSync } from "fs";
 import { AUTH_INFO_PATH } from "./configService.js";
 
@@ -13,29 +13,14 @@ export const whatsappService = {
             const hasSession = existsSync(AUTH_INFO_PATH) &&
                 existsSync(`${AUTH_INFO_PATH}/creds.json`);
 
-            // Create client
-            this.client = await createWhatsAppClient();
-
-            // Solicitar código de emparejamiento de forma segura si no hay sesión
-            if (!hasSession) {
-                const phoneNumber = "50671531073";
-                console.log(`📱 Preparando enlace para el número: ${phoneNumber}`);
-                
-                setTimeout(async () => {
-                    try {
-                        if (this.client && typeof this.client.requestPairingCode === 'function') {
-                            console.log(`✨ Solicitando código de emparejamiento para ${phoneNumber}...`);
-                            const code = await this.client.requestPairingCode(phoneNumber);
-                            console.log(`🔑 ==========================================`);
-                            console.log(`🔑 TU CÓDIGO DE EMPAREJAMIENTO ES: ${code}`);
-                            console.log(`🔑 ==========================================`);
-                        }
-                    } catch (err) {
-                        console.error("❌ Error al solicitar el código:", err.message);
-                    }
-                }, 5000);
+            if (hasSession) {
+                console.log("📂 Found existing session. Attempting to resume...");
+            } else {
+                console.log("📱 No session found. Scan QR code to connect.");
             }
 
+            // Create client
+            this.client = await createWhatsAppClient();
             return this.client;
         } catch (error) {
             console.error("❌ Failed to initialize WhatsApp service:", error);
@@ -70,4 +55,3 @@ export const whatsappService = {
         return this.init();
     }
 };
-
