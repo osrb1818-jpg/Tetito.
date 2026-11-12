@@ -15,9 +15,11 @@ httpServer.listen(PORT, () => {
     console.log(`🚀 Tervux-Mini-Bot running on port ${PORT}`);
 });
 
-// Initialize WhatsApp
+// Initialize WhatsApp con captura detallada de errores
 whatsappService.init().catch(err => {
-    console.error("Failed to initialize WhatsApp Service:", err);
+    console.error("🔥 FATAL WHATSAPP INIT ERROR DETAILS:");
+    console.error("Message:", err.message);
+    console.error("Stack:", err.stack);
 });
 
 // Global Error Handling
@@ -39,11 +41,9 @@ process.on("uncaughtException", (err) => {
     }
 });
 
-
 // Graceful Shutdown
 const shutdown = () => {
     console.log("🛑 Server shutting down...");
-    // Give async file writes a moment to finish (e.g. session saving)
     setTimeout(() => {
         process.exit(0);
     }, 500);
@@ -51,3 +51,4 @@ const shutdown = () => {
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
+
